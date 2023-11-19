@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Parking_Locator_App</string>
+    <string name="google_maps_key">AIzaSyDumiGG295M3JgjUznIM40Ca9T72HllfQU</string>
 </resources>
