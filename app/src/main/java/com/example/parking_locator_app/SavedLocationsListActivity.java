@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import java.util.ArrayList;
@@ -27,6 +28,20 @@ public class SavedLocationsListActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         locationsAdapter = new LocationsAdapter(savedLocations);
         recyclerView.setAdapter(locationsAdapter);
+        locationsAdapter.setOnItemClickListener(new LocationsAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(int position) {
+                // Handle item click here
+                SavedLocation clickedLocation = savedLocations.get(position);
+
+                // Create an Intent to open the LocationDetailsActivity and pass the location details
+                Intent intent = new Intent(SavedLocationsListActivity.this, LocationDetailsActivity.class);
+                intent.putExtra("key", "Location Name: " + clickedLocation.getName() + "\nLatitude: " + clickedLocation.getLatitude() + "\nLongitude: " + clickedLocation.getLongitude());
+                startActivity(intent);
+            }
+        });
+
+
     }
 }
 

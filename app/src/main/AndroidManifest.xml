@@ -18,6 +18,11 @@
         <activity
             android:name=".SavedLocationsListActivity"
             android:exported="false" />
+        <activity
+            android:name=".LocationDetailsActivity"
+            android:label="Location Details">
+        </activity>
+
 
 
         <meta-data
