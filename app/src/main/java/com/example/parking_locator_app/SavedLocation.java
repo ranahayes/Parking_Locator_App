@@ -1,3 +1,5 @@
+package com.example.parking_locator_app;
+
 public class SavedLocation {
     private String name;
     private double latitude;

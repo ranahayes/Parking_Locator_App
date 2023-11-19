@@ -5,6 +5,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -59,6 +60,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             // Save current location logic
             statusBar.setText(getString(R.string.location_saved));
             // More code to handle saving the location
+            Intent intent = new Intent(MainActivity.this, SavedLocationsListActivity.class);
+            startActivity(intent);
         });
 
         findCarButton.setOnClickListener(view -> {
