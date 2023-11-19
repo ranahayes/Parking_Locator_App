@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "com.example.parking_locator_app"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.parking_locator_app"

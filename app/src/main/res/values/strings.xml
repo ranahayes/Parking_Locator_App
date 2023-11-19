@@ -4,4 +4,5 @@
     <string name="save_location">Save Location</string>
     <string name="find_car">Find Car</string>
     <string name="location_saved">Location saved</string>
+    <string name="location_permission_needed">location perms are needed</string>
 </resources>
