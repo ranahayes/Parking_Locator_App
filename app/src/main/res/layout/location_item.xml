@@ -20,4 +20,21 @@
         android:textSize="14sp"
         android:text="Latitude, Longitude"/>
 
+
+    <TextView
+        android:id="@+id/location_timestamp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:text="Timestamp"/>
+
+    <TextView
+        android:id="@+id/location_notes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:text="Notes"/>
+
 </LinearLayout>
+
+
