@@ -1,5 +1,9 @@
 package com.example.parking_locator_app;
 
+import androidx.room.Room;
+import android.os.AsyncTask;
+
+
 import androidx.fragment.app.FragmentActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -17,6 +21,8 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 
 public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
+    private LocationRepository locationRepository;
+
 
     private GoogleMap mMap;
     private Button saveLocationButton;
@@ -29,6 +35,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        locationRepository = new LocationRepository(this.getApplication());
+
         setContentView(R.layout.activity_main);
 
         // Initialize the buttons and status bar text view
