@@ -14,6 +14,6 @@ public interface LocationDao {
     @Query("SELECT * FROM saved_locations")
     List<SavedLocation> getAllLocations();
 
-    // Additional DAO methods can be defined here
+    // Additional DAO methods to be defined here
 }
 
