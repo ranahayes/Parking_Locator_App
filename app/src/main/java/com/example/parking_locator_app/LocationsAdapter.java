@@ -42,12 +42,12 @@ public class LocationsAdapter extends RecyclerView.Adapter<LocationsAdapter.Loca
         SavedLocation location = locationList.get(position);
         holder.locationName.setText(location.getName());
         holder.locationDetails.setText("Lat: " + location.getLatitude() + ", Lng: " + location.getLongitude());
-        // Handle item click
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (onItemClickListener != null) {
-                    onItemClickListener.onItemClick(position);
+                    onItemClickListener.onItemClick(location.getId()); // Passed the ID of the location instead of position
+
                 }
             }
         });
