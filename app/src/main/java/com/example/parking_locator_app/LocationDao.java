@@ -1,8 +1,11 @@
 package com.example.parking_locator_app;
 
+
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import java.util.List;
 
@@ -14,6 +17,13 @@ public interface LocationDao {
     @Query("SELECT * FROM saved_locations")
     List<SavedLocation> getAllLocations();
 
-    // Additional DAO methods to be defined here
-}
+    @Query("DELETE FROM saved_locations WHERE id = :id")
+    void deleteById(int id);
 
+
+    @Update
+    void update(SavedLocation location);
+
+    @Query("SELECT * FROM saved_locations WHERE name LIKE :name")
+    List<SavedLocation> findLocationsByName(String name);
+}
