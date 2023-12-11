@@ -30,17 +30,19 @@
 
 
     <!-- Button for navigation -->
+
+    <!-- Button for deletion -->
     <Button
         android:id="@+id/navigate_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="60dp"
         android:text="Navigate"
-        app:layout_constraintTop_toBottomOf="@+id/location_details_text"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"/>
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/location_details_text" />
 
-    <!-- Button for deletion -->
     <Button
         android:id="@+id/delete_button"
         android:layout_width="wrap_content"
