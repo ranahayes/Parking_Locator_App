@@ -15,7 +15,6 @@
         android:padding="16dp"
         android:background="@color/linear_layout_background">
 
-        <!-- TextView for Location Name with enhanced styling -->
         <TextView
             android:id="@+id/location_name"
             android:layout_width="match_parent"

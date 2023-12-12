@@ -16,5 +16,5 @@
         android:layout_height="wrap_content"
         android:hint="Enter notes"/>
 
-    <!-- Add other fields as needed -->
+
 </LinearLayout>
