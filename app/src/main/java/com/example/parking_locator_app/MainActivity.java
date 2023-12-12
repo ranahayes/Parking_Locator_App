@@ -4,14 +4,18 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -46,9 +50,48 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Initialize FusedLocationProviderClient
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        // Initialize Room database
+        db = AppDatabase.getDatabase(getApplicationContext());
+        locationDao = db.locationDao();
+
+        locationDao = db.locationDao();
+
         // Initialize the buttons and status bar text view
         saveLocationButton = findViewById(R.id.save_location_button);
         findCarButton = findViewById(R.id.find_location_button);
+        findCarButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    getLatestSavedLocation(new OnLatestLocationFetched() {
+                        @Override
+                        public void onLocationFetched(SavedLocation latestLocation) {
+                            double latitude = latestLocation.getLatitude();
+                            double longitude = latestLocation.getLongitude();
+
+                            // Create the Google Maps navigation URI with the correct format
+                            Uri gmmIntentUri = Uri.parse("google.navigation:q=" + latitude + "," + longitude);
+
+                            // Create an intent to open Google Maps for navigation
+                            Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+
+                            // Set the package to ensure it opens in the Google Maps app
+                            mapIntent.setPackage("com.google.android.apps.maps");
+
+                            // Check if there is an app that can handle the intent
+                            if (mapIntent.resolveActivity(getPackageManager()) != null) {
+                                startActivity(mapIntent);
+                            } else {
+                                // If no app can handle the intent, you can handle it here
+                                // For example, you can open a web-based map in a browser.
+                            }
+                        }
+                    });
+                }
+            });
+
         viewSavedLocationsButton = findViewById(R.id.view_saved_locations_button);
         viewSavedLocationsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -58,14 +101,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         });
         statusBar = findViewById(R.id.status_bar);
 
-        // Initialize FusedLocationProviderClient
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
-        // Initialize Room database
-        db = AppDatabase.getDatabase(getApplicationContext());
-        locationDao = db.locationDao();
-
-        locationDao = db.locationDao();
 
         // Check for location permissions
         checkLocationPermission();
@@ -102,9 +137,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 saveCurrentLocation();
             }
         });
-
-// View Saved Locations button implementation(view -> saveCurrentLocation());
-        findCarButton.setOnClickListener(view -> viewSavedLocations());
     }
 
     @Override
@@ -149,8 +181,29 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         Intent intent = new Intent(MainActivity.this, SavedLocationsListActivity.class);
         startActivity(intent);
     }
+    @SuppressLint("StaticFieldLeak")
+    private void getLatestSavedLocation(OnLatestLocationFetched listener) {
+        new AsyncTask<Void, Void, SavedLocation>() {
+            @Override
+            protected SavedLocation doInBackground(Void... voids) {
+                // Correctly fetching a single SavedLocation object
+                return locationDao.getLatestLocation();
+            }
+            @Override
+            protected void onPostExecute(SavedLocation latestLocation) {
+                // This runs on the main thread
+                if (latestLocation != null) {
+                    listener.onLocationFetched(latestLocation);
+                } else {
+                    Toast.makeText(MainActivity.this, "No saved location found", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }.execute();
+    }
 
-
+    public interface OnLatestLocationFetched {
+        void onLocationFetched(SavedLocation location);
+    }
 
     // Method to save location to the database
     private void saveLocationToDatabase(double latitude, double longitude) {
