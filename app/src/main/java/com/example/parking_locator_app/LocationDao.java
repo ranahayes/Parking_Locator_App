@@ -27,5 +27,8 @@ public interface LocationDao {
     @Query("SELECT * FROM saved_locations WHERE name LIKE :name")
     List<SavedLocation> findLocationsByName(String name);
 
+    @Query("SELECT * FROM saved_locations ORDER BY timestamp DESC LIMIT 1")
+    SavedLocation getLatestLocation();
+
 
 }
