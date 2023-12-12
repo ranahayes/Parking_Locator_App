@@ -5,6 +5,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -13,6 +14,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.view.View;
 import android.widget.Toast;
@@ -24,10 +26,16 @@ import com.google.android.gms.maps.SupportMapFragment;
 // Additional imports for GPS and Room database
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+import android.app.AlertDialog;
+
 
 // Room database imports
 import androidx.room.Room;
+
+import java.util.List;
 
 public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -35,7 +43,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private Button saveLocationButton;
     private Button findCarButton;
     private Button viewSavedLocationsButton;
-    private TextView statusBar;
     private FusedLocationProviderClient fusedLocationClient;
 
     // Database objects
@@ -62,35 +69,29 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         // Initialize the buttons and status bar text view
         saveLocationButton = findViewById(R.id.save_location_button);
         findCarButton = findViewById(R.id.find_location_button);
+        View statusBar = findViewById(R.id.status_bar);
         findCarButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    getLatestSavedLocation(new OnLatestLocationFetched() {
-                        @Override
-                        public void onLocationFetched(SavedLocation latestLocation) {
-                            double latitude = latestLocation.getLatitude();
-                            double longitude = latestLocation.getLongitude();
+            @Override
+            public void onClick(View v) {
+                getLatestSavedLocation(new OnLatestLocationFetched() {
+                    @Override
+                    public void onLocationFetched(SavedLocation latestLocation) {
+                        double latitude = latestLocation.getLatitude();
+                        double longitude = latestLocation.getLongitude();
 
-                            // Create the Google Maps navigation URI with the correct format
-                            Uri gmmIntentUri = Uri.parse("google.navigation:q=" + latitude + "," + longitude);
+                        Uri gmmIntentUri = Uri.parse("google.navigation:q=" + latitude + "," + longitude);
+                        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                        mapIntent.setPackage("com.google.android.apps.maps");
 
-                            // Create an intent to open Google Maps for navigation
-                            Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
 
-                            // Set the package to ensure it opens in the Google Maps app
-                            mapIntent.setPackage("com.google.android.apps.maps");
-
-                            // Check if there is an app that can handle the intent
-                            if (mapIntent.resolveActivity(getPackageManager()) != null) {
-                                startActivity(mapIntent);
-                            } else {
-                                // If no app can handle the intent, you can handle it here
-                                // For example, you can open a web-based map in a browser.
-                            }
+                        if (mapIntent.resolveActivity(getPackageManager()) != null) {
+                            startActivity(mapIntent);
+                        } else {
                         }
-                    });
-                }
-            });
+                    }
+                });
+            }
+        });
 
         viewSavedLocationsButton = findViewById(R.id.view_saved_locations_button);
         viewSavedLocationsButton.setOnClickListener(new View.OnClickListener() {
@@ -99,7 +100,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 viewSavedLocations();
             }
         });
-        statusBar = findViewById(R.id.status_bar);
+
 
 
         // Check for location permissions
@@ -154,21 +155,52 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         // Additional setup for the map
 
         mMap = googleMap;
-        // Additional setup for the map
+        fetchAndDisplaySavedLocations();
     }
-
-
     private void saveCurrentLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.getLastLocation()
-                    .addOnSuccessListener(this, location -> {
-                        if (location != null) {
-                            // Saving location to the database directly
-                            saveLocationToDatabase(location.getLatitude(), location.getLongitude());
+                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            if (location != null) {
+                                openSaveLocationDialog(location.getLatitude(), location.getLongitude());
+                            }
                         }
                     });
         }
+    }
+
+    private void openSaveLocationDialog(final double latitude, final double longitude) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle("Save Location");
+
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_save_location, null);
+        builder.setView(dialogView);
+
+        final EditText editTextLocationName = dialogView.findViewById(R.id.editTextLocationName);
+        final EditText editTextLocationNotes = dialogView.findViewById(R.id.editTextLocationNotes);
+
+        builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String locationName = editTextLocationName.getText().toString();
+                String locationNotes = editTextLocationNotes.getText().toString();
+                saveLocationToDatabase(latitude, longitude, locationName, locationNotes);
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
         runOnUiThread(() -> {
             TextView statusBar = findViewById(R.id.status_bar);
             statusBar.setVisibility(View.VISIBLE);
@@ -176,6 +208,21 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
+    private void displaySavedLocationsOnMap(List<SavedLocation> locations) {
+        if (mMap != null) {
+            for (SavedLocation location : locations) {
+                LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                mMap.addMarker(new MarkerOptions().position(latLng).title(location.getName()));
+
+            }
+        }
+    }
+    private void fetchAndDisplaySavedLocations() {
+        AsyncTask.execute(() -> {
+            List<SavedLocation> locations = locationDao.getAllLocations();
+            runOnUiThread(() -> displaySavedLocationsOnMap(locations));
+        });
+    }
 
     private void viewSavedLocations() {
         Intent intent = new Intent(MainActivity.this, SavedLocationsListActivity.class);
@@ -186,7 +233,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         new AsyncTask<Void, Void, SavedLocation>() {
             @Override
             protected SavedLocation doInBackground(Void... voids) {
-                // Correctly fetching a single SavedLocation object
+
                 return locationDao.getLatestLocation();
             }
             @Override
@@ -206,28 +253,27 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     // Method to save location to the database
-    private void saveLocationToDatabase(double latitude, double longitude) {
+    private void saveLocationToDatabase(double latitude, double longitude, String name, String notes) {
         AsyncTask.execute(() -> {
             // Create a SavedLocation object with default values
             long currentTime = System.currentTimeMillis();
-            String defaultName = "Location " + currentTime;
             String defaultAddress = "Addr " + currentTime;
-            String defaultNotes = "Notes: " + currentTime;
 
+            String defaultName;
             SavedLocation savedLocation = new SavedLocation(
                     0,
-                    defaultName,
+                    name,
                     latitude,
                     longitude,
                     defaultAddress,
                     currentTime,
-                    defaultNotes
+                    notes
             );
 
 
             // Insert location into database
             locationDao.insert(savedLocation);
-            // Location saved
+
 
         });
     }
