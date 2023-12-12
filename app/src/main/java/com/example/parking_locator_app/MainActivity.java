@@ -201,11 +201,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         AlertDialog dialog = builder.create();
         dialog.show();
 
-        runOnUiThread(() -> {
-            TextView statusBar = findViewById(R.id.status_bar);
-            statusBar.setVisibility(View.VISIBLE);
-            statusBar.setText("Location saved successfully");
-        });
     }
 
     private void displaySavedLocationsOnMap(List<SavedLocation> locations) {
@@ -218,9 +213,15 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
     private void fetchAndDisplaySavedLocations() {
+        // Fetch locations from the database and update the map
         AsyncTask.execute(() -> {
             List<SavedLocation> locations = locationDao.getAllLocations();
-            runOnUiThread(() -> displaySavedLocationsOnMap(locations));
+            runOnUiThread(() -> {
+                if (mMap != null) {
+                    mMap.clear();
+                    displaySavedLocationsOnMap(locations);
+                }
+            });
         });
     }
 
@@ -273,6 +274,11 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
             // Insert location into database
             locationDao.insert(savedLocation);
+            runOnUiThread(this::fetchAndDisplaySavedLocations);
+            runOnUiThread(() -> {
+                Toast.makeText(MainActivity.this, "Location saved successfully", Toast.LENGTH_SHORT).show();
+            });
+
 
 
         });
