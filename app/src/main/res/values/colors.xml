@@ -3,4 +3,13 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="text_color">#FF0000</color>
+    <color name="light_background">#F5F5F5</color>
+    <!-- Color for the background of the card -->
+    <color name="card_background">#FFFFFF</color>
+
+    <!-- Color for the background of the LinearLayout inside the card -->
+    <color name="linear_layout_background">#F5F5F5</color>
+
+    <!-- Primary text color -->
+    <color name="text_primary">#333333</color>
 </resources>
