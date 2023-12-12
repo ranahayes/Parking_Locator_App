@@ -26,6 +26,8 @@ import com.google.android.gms.maps.SupportMapFragment;
 // Additional imports for GPS and Room database
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -205,9 +207,14 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void displaySavedLocationsOnMap(List<SavedLocation> locations) {
         if (mMap != null) {
+            BitmapDescriptor carIcon = BitmapDescriptorFactory.fromResource(R.drawable.car_icon);
             for (SavedLocation location : locations) {
                 LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                 mMap.addMarker(new MarkerOptions().position(latLng).title(location.getName()));
+                mMap.addMarker(new MarkerOptions()
+                        .position(latLng)
+                        .title(location.getName())
+                        .icon(carIcon));
 
             }
         }
