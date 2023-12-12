@@ -11,6 +11,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
+import android.view.View;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -29,6 +30,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private Button saveLocationButton;
     private Button findCarButton;
+    private Button viewSavedLocationsButton;
     private TextView statusBar;
     private FusedLocationProviderClient fusedLocationClient;
 
@@ -47,6 +49,13 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         // Initialize the buttons and status bar text view
         saveLocationButton = findViewById(R.id.save_location_button);
         findCarButton = findViewById(R.id.find_location_button);
+        viewSavedLocationsButton = findViewById(R.id.view_saved_locations_button);
+        viewSavedLocationsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                viewSavedLocations();
+            }
+        });
         statusBar = findViewById(R.id.status_bar);
 
         // Initialize FusedLocationProviderClient
@@ -86,7 +95,15 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void setUpButtonListeners() {
-        saveLocationButton.setOnClickListener(view -> saveCurrentLocation());
+        // Save Location button implementation
+        saveLocationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                saveCurrentLocation();
+            }
+        });
+
+// View Saved Locations button implementation(view -> saveCurrentLocation());
         findCarButton.setOnClickListener(view -> viewSavedLocations());
     }
 
@@ -120,6 +137,11 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                         }
                     });
         }
+        runOnUiThread(() -> {
+            TextView statusBar = findViewById(R.id.status_bar);
+            statusBar.setVisibility(View.VISIBLE);
+            statusBar.setText("Location saved successfully");
+        });
     }
 
 
@@ -152,10 +174,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
             // Insert location into database
             locationDao.insert(savedLocation);
-            runOnUiThread(() -> {
-                Intent intent = new Intent(MainActivity.this, SavedLocationsListActivity.class);
-                startActivity(intent);
-            });
+            // Location saved
 
         });
     }
