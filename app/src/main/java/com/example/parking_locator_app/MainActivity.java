@@ -1,17 +1,13 @@
 package com.example.parking_locator_app;
 
-import androidx.room.Room;
-import android.os.AsyncTask;
-
-
 import androidx.fragment.app.FragmentActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
@@ -20,14 +16,25 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 
-public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
-    private LocationRepository locationRepository;
+// Additional imports for GPS and Room database
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 
+// Room database imports
+import androidx.room.Room;
+
+public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private Button saveLocationButton;
     private Button findCarButton;
     private TextView statusBar;
+    private FusedLocationProviderClient fusedLocationClient;
+
+    // Database objects
+    private AppDatabase db;
+    private LocationDao locationDao;
 
     // Constants
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -35,8 +42,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        locationRepository = new LocationRepository(this.getApplication());
-
         setContentView(R.layout.activity_main);
 
         // Initialize the buttons and status bar text view
@@ -44,55 +49,114 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         findCarButton = findViewById(R.id.find_location_button);
         statusBar = findViewById(R.id.status_bar);
 
+        // Initialize FusedLocationProviderClient
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        // Initialize Room database
+        db = AppDatabase.getDatabase(getApplicationContext());
+        locationDao = db.locationDao();
+
+        locationDao = db.locationDao();
+
         // Check for location permissions
+        checkLocationPermission();
+
+        // Set up the map fragment
+        setUpMapFragment();
+
+        // Set up the button listeners
+        setUpButtonListeners();
+    }
+
+    private void checkLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     LOCATION_PERMISSION_REQUEST_CODE);
         }
+    }
 
-        // Set up the map fragment
+    private void setUpMapFragment() {
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         }
-
-        // Set up the button listeners
-        setUpButtonListeners();
     }
 
     private void setUpButtonListeners() {
-        saveLocationButton.setOnClickListener(view -> {
-            // Save current location logic
-            statusBar.setText(getString(R.string.location_saved));
-            // More code to handle saving the location
-            Intent intent = new Intent(MainActivity.this, SavedLocationsListActivity.class);
-            startActivity(intent);
-        });
-
-        findCarButton.setOnClickListener(view -> {
-            // Find car logic
-        });
+        saveLocationButton.setOnClickListener(view -> saveCurrentLocation());
+        findCarButton.setOnClickListener(view -> viewSavedLocations());
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Map Configurations here
-        configureMap();
-    }
-
-    private void configureMap() {
-        // Check if we have permission to access the fine location
+        // Check permission and enable My Location layer
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             mMap.setMyLocationEnabled(true);
         } else {
-            statusBar.setText(getString(R.string.location_permission_needed));
-            // Consider calling ActivityCompat#requestPermissions here to request the missing permissions
+            // Request permission
         }
+
+        // Additional setup for the map
+
+        mMap = googleMap;
+        // Additional setup for the map
+    }
+
+
+    private void saveCurrentLocation() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(this, location -> {
+                        if (location != null) {
+                            // Saving location to the database directly
+                            saveLocationToDatabase(location.getLatitude(), location.getLongitude());
+                        }
+                    });
+        }
+    }
+
+
+    private void viewSavedLocations() {
+        Intent intent = new Intent(MainActivity.this, SavedLocationsListActivity.class);
+        startActivity(intent);
+    }
+
+
+
+    // Method to save location to the database
+    private void saveLocationToDatabase(double latitude, double longitude) {
+        AsyncTask.execute(() -> {
+            // Create a SavedLocation object with default values
+            long currentTime = System.currentTimeMillis();
+            String defaultName = "Location " + currentTime;
+            String defaultAddress = "Addr " + currentTime;
+            String defaultNotes = "Notes: " + currentTime;
+
+            SavedLocation savedLocation = new SavedLocation(
+                    0,
+                    defaultName,
+                    latitude,
+                    longitude,
+                    defaultAddress,
+                    currentTime,
+                    defaultNotes
+            );
+
+
+            // Insert location into database
+            locationDao.insert(savedLocation);
+            runOnUiThread(() -> {
+                Intent intent = new Intent(MainActivity.this, SavedLocationsListActivity.class);
+                startActivity(intent);
+            });
+
+        });
     }
 }

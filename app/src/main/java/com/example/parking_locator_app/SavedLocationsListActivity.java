@@ -45,7 +45,8 @@ public class SavedLocationsListActivity extends AppCompatActivity implements Del
         locationsAdapter.setOnItemClickListener(new LocationsAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
-                SavedLocation clickedLocation = savedLocations.get(position);
+                    if (position >= 0 && position < savedLocations.size()) {
+                        SavedLocation clickedLocation = savedLocations.get(position);
 
                 // Create an Intent to open the LocationDetailsActivity and pass the location details
                 Intent intent = new Intent(SavedLocationsListActivity.this, LocationDetailsActivity.class);
@@ -53,7 +54,7 @@ public class SavedLocationsListActivity extends AppCompatActivity implements Del
                 intent.putExtra("longitude", clickedLocation.getLongitude());
                 intent.putExtra("locationId", clickedLocation.getId());
                 startActivity(intent);
-            }
+            }}
         });
     }
 
@@ -63,7 +64,12 @@ public class SavedLocationsListActivity extends AppCompatActivity implements Del
         fetchSavedLocations();
     }
 
+    public void refreshLocationList() {
+        fetchSavedLocations();
+    }
+
     private void fetchSavedLocations() {
+        // Fetching saved locations asynchronously
         locationRepository.getAllLocations(new LocationRepository.OnLocationsReceivedListener() {
             @Override
             public void onLocationsReceived(List<SavedLocation> locations) {
